@@ -14,7 +14,7 @@ Clicking the widget copies the file path to clipboard via `wl-copy`.
 ## Install
 
 ```sh
-git clone https://github.com/youruser/file-preview
+git clone https://github.com/areoyl/file-preview
 # start the daemon (add to your compositor autostart)
 python3 file-preview/file-preview-daemon.py watch &
 ```
