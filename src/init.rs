@@ -2,7 +2,7 @@ use anyhow::Result;
 use std::fs;
 use std::path::PathBuf;
 
-const CONFIG_TOML: &str = r#"# file-preview daemon configuration
+const CONFIG_TOML: &str = r#"# glance daemon configuration
 
 # directories to watch for new files
 watch_dirs = ["~/Pictures/Screenshots", "~/Downloads"]
@@ -18,31 +18,36 @@ ignore_suffixes = [".part", ".crdownload", ".tmp"]
 
 # pixels from top of screen to below waybar (popup appears here)
 bar_height = 57
+
+# number of files to remember in history
+history_size = 5
 "#;
 
 const WAYBAR_MODULE: &str = r#"
-"custom/file-preview": {
-    "exec": "file-preview status",
+"custom/glance": {
+    "exec": "glance status",
     "return-type": "json",
     "interval": 1,
     "signal": 8,
-    "on-click": "file-preview drag",
-    "on-click-right": "file-preview copy"
+    "on-click": "glance menu",
+    "on-click-right": "glance copy",
+    "on-scroll-up": "glance scroll up",
+    "on-scroll-down": "glance scroll down"
 }
 "#;
 
 const WAYBAR_CSS: &str = r#"
-/* file-preview widget */
-#custom-file-preview {
+/* glance widget */
+#custom-glance {
     padding: 0 8px;
     color: #cdd6f4;
 }
 
-#custom-file-preview.active {
+#custom-glance.active {
     color: #a6e3a1;
 }
 
-#custom-file-preview.empty {
+#custom-glance.empty {
     padding: 0;
 }
 "#;
@@ -71,7 +76,7 @@ fn contains(path: &PathBuf, needle: &str) -> bool {
 }
 
 fn setup_config() -> Result<()> {
-    let path = config_base().join("file-preview/config.toml");
+    let path = config_base().join("glance/config.toml");
     if path.exists() {
         skip(&format!("config already exists: {}", path.display()));
         return Ok(());
@@ -102,7 +107,7 @@ fn setup_waybar_module() -> Result<()> {
         return Ok(());
     };
 
-    if contains(&config_file, "file-preview") {
+    if contains(&config_file, "glance") {
         skip("waybar module already configured");
         return Ok(());
     }
@@ -114,7 +119,7 @@ fn setup_waybar_module() -> Result<()> {
         .find(|p| p.exists());
 
     if let Some(mf) = modules_file {
-        if contains(&mf, "file-preview") {
+        if contains(&mf, "glance") {
             skip("waybar module already in modules file");
             return Ok(());
         }
@@ -151,16 +156,16 @@ fn setup_waybar_module() -> Result<()> {
     // also add to modules-right if not already there
     if let Ok(content) = fs::read_to_string(&config_file) {
         if content.contains("modules-right")
-            && !content.contains("custom/file-preview")
+            && !content.contains("custom/glance")
         {
             let new = content.replacen(
                 "\"modules-right\": [",
-                "\"modules-right\": [\n\t\"custom/file-preview\",",
+                "\"modules-right\": [\n\t\"custom/glance\",",
                 1,
             );
             if new != content {
                 fs::write(&config_file, new)?;
-                ok("added custom/file-preview to modules-right");
+                ok("added custom/glance to modules-right");
             }
         }
     }
@@ -174,8 +179,8 @@ fn setup_waybar_css() -> Result<()> {
         skip("waybar style.css not found, skipping CSS setup");
         return Ok(());
     }
-    if contains(&path, "custom-file-preview") {
-        skip("waybar CSS already has file-preview styles");
+    if contains(&path, "custom-glance") {
+        skip("waybar CSS already has glance styles");
         return Ok(());
     }
     let mut content = fs::read_to_string(&path)?;
@@ -191,19 +196,20 @@ fn setup_hyprland() -> Result<()> {
         skip("hyprland.conf not found, skipping autostart setup");
         return Ok(());
     }
-    if contains(&path, "file-preview") {
+    if contains(&path, "glance") {
         skip("hyprland autostart already configured");
         return Ok(());
     }
     let mut content = fs::read_to_string(&path)?;
-    content.push_str("\nexec-once = file-preview watch\n");
+    content.push_str("\nexec-once = glance watch\n");
+    content.push_str("bind = SUPER, V, exec, glance drag\n");
     fs::write(&path, content)?;
-    ok(&format!("added exec-once to {}", path.display()));
+    ok("added exec-once and SUPER+V keybind");
     Ok(())
 }
 
 pub fn run() -> Result<()> {
-    eprintln!("\n  file-preview init\n");
+    eprintln!("\n  glance init\n");
     setup_config()?;
     setup_waybar_module()?;
     setup_waybar_css()?;
