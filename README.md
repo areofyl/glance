@@ -32,6 +32,23 @@ cargo build --release
 cp target/release/file-preview ~/.local/bin/
 ```
 
+Then run the setup wizard:
+
+```sh
+file-preview init
+```
+
+This automatically:
+- Creates the default config at `~/.config/file-preview/config.toml`
+- Adds the Waybar module to your Waybar config
+- Appends CSS styles to your Waybar `style.css`
+- Adds `exec-once = file-preview watch` to your Hyprland config
+
+Restart Waybar and you're done.
+
+<details>
+<summary>Manual setup</summary>
+
 ### Autostart
 
 Add to your Hyprland config (`~/.config/hypr/hyprland.conf`):
@@ -77,6 +94,8 @@ Add to your Waybar CSS (`~/.config/waybar/style.css`):
 }
 ```
 
+</details>
+
 ## Config
 
 Optional. Copy `config.example.toml` to `~/.config/file-preview/config.toml`
@@ -102,6 +121,7 @@ bar_height = 57
 ## Commands
 
 ```
+file-preview init     # set up config, waybar module, CSS, and autostart
 file-preview watch    # run the inotify watcher (long-running)
 file-preview status   # JSON for waybar (called by exec)
 file-preview copy     # wl-copy the latest file path
