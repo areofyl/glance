@@ -20,6 +20,9 @@ fn default_ignore_suffixes() -> Vec<String> {
 fn default_bar_height() -> i32 {
     57
 }
+fn default_history_size() -> usize {
+    5
+}
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
@@ -33,6 +36,8 @@ pub struct Config {
     pub ignore_suffixes: Vec<String>,
     #[serde(default = "default_bar_height")]
     pub bar_height: i32,
+    #[serde(default = "default_history_size")]
+    pub history_size: usize,
 }
 
 impl Default for Config {
@@ -43,6 +48,7 @@ impl Default for Config {
             dismiss_seconds: default_dismiss_seconds(),
             ignore_suffixes: default_ignore_suffixes(),
             bar_height: default_bar_height(),
+            history_size: default_history_size(),
         }
     }
 }
@@ -64,11 +70,11 @@ impl Config {
     }
 
     pub fn state_file() -> PathBuf {
-        runtime_dir().join("file-preview-latest.json")
+        runtime_dir().join("glance-latest.json")
     }
 
     pub fn pid_file() -> PathBuf {
-        runtime_dir().join("file-preview.pid")
+        runtime_dir().join("glance.pid")
     }
 }
 
@@ -85,5 +91,5 @@ fn config_path() -> PathBuf {
             PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| "/tmp".into()))
                 .join(".config")
         });
-    base.join("file-preview/config.toml")
+    base.join("glance/config.toml")
 }
