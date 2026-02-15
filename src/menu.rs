@@ -178,7 +178,7 @@ pub fn run(cfg: &Config) -> Result<()> {
         let css = gtk4::CssProvider::new();
         #[allow(deprecated)]
         css.load_from_data(
-            "window { background: transparent; } \
+            "window { background: rgba(0,0,0,0.01); } \
              .menu { background: rgba(30,30,46,0.95); border-radius: 12px; padding: 10px; } \
              .menu-size { color: #a6adc8; font-size: 11px; margin-top: 2px; } \
              .menu-actions { margin-top: 8px; } \
@@ -270,7 +270,7 @@ pub fn run(cfg: &Config) -> Result<()> {
         btn_copy.connect_clicked(move |_| {
             let _ = Command::new("wl-copy")
                 .arg(p.to_string_lossy().as_ref())
-                .output();
+                .spawn();
             std::process::exit(0);
         });
         actions.append(&btn_copy);
