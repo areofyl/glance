@@ -4,10 +4,11 @@
 // Then add "custom/file-preview" to a bar position (e.g. "modules-right").
 {
     "custom/file-preview": {
-        "exec": "python3 /path/to/file-preview-daemon.py status",
+        "exec": "file-preview status",
         "return-type": "json",
         "interval": 1,
         "signal": 8,
-        "on-click": "python3 /path/to/file-preview-daemon.py copy"
+        "on-click": "file-preview drag",
+        "on-click-right": "file-preview copy"
     }
 }
