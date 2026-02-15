@@ -1,14 +1,16 @@
 // Add this to the "modules" section of your Waybar config
 // (~/.config/waybar/config.jsonc)
 //
-// Then add "custom/file-preview" to a bar position (e.g. "modules-right").
+// Then add "custom/glance" to a bar position (e.g. "modules-right").
 {
-    "custom/file-preview": {
-        "exec": "file-preview status",
+    "custom/glance": {
+        "exec": "glance status",
         "return-type": "json",
         "interval": 1,
         "signal": 8,
-        "on-click": "file-preview drag",
-        "on-click-right": "file-preview copy"
+        "on-click": "glance drag",
+        "on-click-right": "glance copy",
+        "on-scroll-up": "glance scroll up",
+        "on-scroll-down": "glance scroll down"
     }
 }
