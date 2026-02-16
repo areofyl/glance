@@ -6,6 +6,7 @@ mod menu;
 mod scroll;
 mod state;
 mod status;
+mod util;
 mod watch;
 
 use anyhow::Result;
