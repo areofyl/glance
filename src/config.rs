@@ -24,7 +24,7 @@ fn default_history_size() -> usize {
     5
 }
 fn default_editor() -> String {
-    "swappy".into()
+    "swappy -f".into()
 }
 fn default_actions() -> Vec<String> {
     vec!["drag".into(), "open".into(), "edit".into(), "copy".into()]
