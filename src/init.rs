@@ -27,7 +27,7 @@ const WAYBAR_MODULE: &str = r#"
 "custom/glance": {
     "exec": "glance status",
     "return-type": "json",
-    "interval": 1,
+    "interval": "once",
     "signal": 8,
     "on-click": "glance menu",
     "on-click-right": "glance copy",
