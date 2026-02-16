@@ -1,5 +1,5 @@
 use crate::config::Config;
-use crate::state::{read_history, write_history, FileState};
+use crate::state::{with_history, FileState};
 use anyhow::Result;
 use inotify::{EventMask, Inotify, WatchMask};
 use std::collections::{HashMap, VecDeque};
@@ -167,9 +167,10 @@ pub fn run(cfg: &Config) -> Result<()> {
 
             if let Ok(st) = FileState::new(path.clone()) {
                 let state_file = Config::state_file();
-                let mut history = read_history(&state_file);
-                history.push(st, cfg.history_size);
-                let _ = write_history(&state_file, &history);
+                let history_size = cfg.history_size;
+                let _ = with_history(&state_file, |history| {
+                    history.push(st, history_size);
+                });
                 signal_waybar(cfg.signal_number);
                 dismiss_at = Some(now_secs() + cfg.dismiss_seconds);
                 eprintln!("new: {}", path.display());
