@@ -7,14 +7,35 @@ watch_dirs = ["~/Pictures/Screenshots", "~/Downloads"]
 # RTMIN+N signal to poke waybar on new file
 signal_number = 8
 
-# auto-dismiss the widget after N seconds
+# auto-dismiss the waybar widget after N seconds
 dismiss_seconds = 10
 
 # ignore files with these suffixes (partial downloads, etc.)
 ignore_suffixes = [".part", ".crdownload", ".tmp"]
 
-# pixels from top of screen to below waybar (popup appears here)
+# pixels from top of screen to below waybar (menu appears here)
 bar_height = 57
 
 # number of files to remember in history
 history_size = 5
+
+# editor command for the Edit button (default: swappy)
+# swappy is a lightweight Wayland screenshot annotation tool
+# install: sudo dnf install swappy (Fedora) / sudo pacman -S swappy (Arch)
+editor = "swappy"
+
+# which action buttons to show in the dropdown menu
+# available: "drag", "open", "edit", "copy"
+actions = ["drag", "open", "edit", "copy"]
+
+# auto-dismiss the dropdown menu after N seconds (0 = never)
+menu_dismiss_seconds = 8
+
+# menu appearance
+[menu_style]
+background = "rgba(30,30,46,0.95)"
+text_color = "#cdd6f4"
+secondary_color = "#a6adc8"
+button_background = "rgba(255,255,255,0.08)"
+button_hover = "rgba(255,255,255,0.15)"
+border_radius = 12
