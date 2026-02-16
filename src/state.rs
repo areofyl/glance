@@ -1,7 +1,31 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use std::fs::File;
+use std::os::fd::AsRawFd;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
+
+struct FileLock {
+    _file: File,
+}
+
+impl FileLock {
+    fn acquire(state_file: &Path) -> Result<Self> {
+        let lock_path = state_file.with_extension("lock");
+        let file = File::options()
+            .create(true)
+            .write(true)
+            .truncate(false)
+            .open(&lock_path)?;
+        let ret = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX) };
+        if ret != 0 {
+            anyhow::bail!("failed to acquire lock on {}", lock_path.display());
+        }
+        Ok(Self { _file: file })
+    }
+}
+
+// Lock is released when _file is dropped
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileState {
@@ -65,24 +89,38 @@ impl HistoryState {
 
 }
 
-pub fn read_history(state_file: &Path) -> HistoryState {
-    let content = match std::fs::read_to_string(state_file) {
-        Ok(c) => c,
-        Err(_) => return HistoryState { entries: vec![], selected: 0 },
-    };
+fn parse_history(content: &str) -> HistoryState {
     // try new format
-    if let Ok(h) = serde_json::from_str::<HistoryState>(&content) {
+    if let Ok(h) = serde_json::from_str::<HistoryState>(content) {
         return h;
     }
     // backward compat: old single-FileState format
-    if let Ok(fs) = serde_json::from_str::<FileState>(&content) {
+    if let Ok(fs) = serde_json::from_str::<FileState>(content) {
         return HistoryState { entries: vec![fs], selected: 0 };
     }
     HistoryState { entries: vec![], selected: 0 }
 }
 
-pub fn write_history(state_file: &Path, state: &HistoryState) -> Result<()> {
-    let json = serde_json::to_string(state)?;
+pub fn read_history(state_file: &Path) -> HistoryState {
+    let _lock = FileLock::acquire(state_file).ok();
+    let content = match std::fs::read_to_string(state_file) {
+        Ok(c) => c,
+        Err(_) => return HistoryState { entries: vec![], selected: 0 },
+    };
+    parse_history(&content)
+}
+
+/// Atomically read, modify, and write history under a single lock.
+/// Use this when you need to read-then-write to avoid races.
+pub fn with_history<F>(state_file: &Path, f: F) -> Result<()>
+where
+    F: FnOnce(&mut HistoryState),
+{
+    let _lock = FileLock::acquire(state_file)?;
+    let content = std::fs::read_to_string(state_file).unwrap_or_default();
+    let mut history = parse_history(&content);
+    f(&mut history);
+    let json = serde_json::to_string(&history)?;
     std::fs::write(state_file, json)?;
     Ok(())
 }
