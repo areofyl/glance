@@ -10,14 +10,22 @@ struct FileLock {
 }
 
 impl FileLock {
-    fn acquire(state_file: &Path) -> Result<Self> {
+    fn exclusive(state_file: &Path) -> Result<Self> {
+        Self::acquire_inner(state_file, libc::LOCK_EX)
+    }
+
+    fn shared(state_file: &Path) -> Result<Self> {
+        Self::acquire_inner(state_file, libc::LOCK_SH)
+    }
+
+    fn acquire_inner(state_file: &Path, op: libc::c_int) -> Result<Self> {
         let lock_path = state_file.with_extension("lock");
         let file = File::options()
             .create(true)
             .write(true)
             .truncate(false)
             .open(&lock_path)?;
-        let ret = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX) };
+        let ret = unsafe { libc::flock(file.as_raw_fd(), op) };
         if ret != 0 {
             anyhow::bail!("failed to acquire lock on {}", lock_path.display());
         }
@@ -102,7 +110,7 @@ fn parse_history(content: &str) -> HistoryState {
 }
 
 pub fn read_history(state_file: &Path) -> HistoryState {
-    let _lock = FileLock::acquire(state_file).ok();
+    let _lock = FileLock::shared(state_file).ok();
     let content = match std::fs::read_to_string(state_file) {
         Ok(c) => c,
         Err(_) => return HistoryState { entries: vec![], selected: 0 },
@@ -116,7 +124,7 @@ pub fn with_history<F>(state_file: &Path, f: F) -> Result<()>
 where
     F: FnOnce(&mut HistoryState),
 {
-    let _lock = FileLock::acquire(state_file)?;
+    let _lock = FileLock::exclusive(state_file)?;
     let content = std::fs::read_to_string(state_file).unwrap_or_default();
     let mut history = parse_history(&content);
     f(&mut history);
