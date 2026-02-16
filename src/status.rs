@@ -1,5 +1,6 @@
 use crate::config::Config;
 use crate::state::read_history;
+use crate::util::human_size;
 use anyhow::Result;
 use serde_json::json;
 
@@ -59,17 +60,3 @@ pub fn run(cfg: &Config, index_override: Option<usize>) -> Result<()> {
     Ok(())
 }
 
-fn human_size(bytes: u64) -> String {
-    let mut size = bytes as f64;
-    for unit in &["B", "KB", "MB", "GB"] {
-        if size < 1024.0 {
-            return if *unit == "B" {
-                format!("{size} B")
-            } else {
-                format!("{size:.1} {unit}")
-            };
-        }
-        size /= 1024.0;
-    }
-    format!("{size:.1} TB")
-}
