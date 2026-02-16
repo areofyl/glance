@@ -19,10 +19,10 @@ bar_height = 57
 # number of files to remember in history
 history_size = 5
 
-# editor command for the Edit button (default: swappy)
-# swappy is a lightweight Wayland screenshot annotation tool
-# install: sudo dnf install swappy (Fedora) / sudo pacman -S swappy (Arch)
-editor = "swappy"
+# editor command for the Edit button (default: "swappy -f")
+# supports full commands with arguments, e.g. "gimp -n" or "swappy -f"
+# install swappy: sudo dnf install swappy (Fedora) / sudo pacman -S swappy (Arch)
+editor = "swappy -f"
 
 # which action buttons to show in the dropdown menu
 # available: "drag", "open", "edit", "copy"
