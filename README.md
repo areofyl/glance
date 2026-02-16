@@ -1,7 +1,16 @@
 # glance
 
-A file clipboard daemon for Wayland — watches directories for new files and shows a transient widget in [Waybar](https://github.com/Alexays/Waybar).
+A file clipboard for Wayland — watches directories for new files and shows a transient widget in [Waybar](https://github.com/Alexays/Waybar).
 Click to open a dropdown menu with actions: drag-and-drop, open, edit, or copy the path.
+
+## What's new in 0.3.0
+
+- **Filename in menu** — the dropdown now shows the filename alongside the thumbnail and file size
+- **Editor supports arguments** — set `editor = "gimp -n"` or any command with flags in your config
+- **Scroll direction fixed** — scroll up goes to newer files, scroll down to older
+- **Copy respects scroll selection** — right-click copy now works on whichever file you've scrolled to
+- **Proper cleanup** — menu no longer leaves orphaned lock/pid files after dismissal
+- **File locking on state** — concurrent access to history state is now safe under flock
 
 ![demo](demo.gif)
 
@@ -137,9 +146,9 @@ bar_height = 57
 # number of files to remember in history
 history_size = 5
 
-# editor for the Edit button (default: swappy)
-# swappy is recommended for screenshot annotation
-editor = "swappy"
+# editor command for the Edit button (default: "swappy -f")
+# supports full commands with arguments, e.g. "gimp -n" or "swappy -f"
+editor = "swappy -f"
 
 # which buttons to show in the dropdown
 actions = ["drag", "open", "edit", "copy"]
@@ -164,7 +173,7 @@ glance init            # set up config, waybar module, CSS, and autostart
 glance watch           # run the inotify watcher (long-running)
 glance status          # JSON for waybar (called by exec)
 glance menu            # dropdown menu below waybar with actions
-glance copy            # wl-copy the latest file path
+glance copy            # wl-copy the selected file path
 glance drag            # drag-and-drop overlay at cursor
 glance scroll up|down  # navigate through file history
 ```
