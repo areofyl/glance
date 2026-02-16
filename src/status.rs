@@ -10,18 +10,15 @@ pub fn run(cfg: &Config, index_override: Option<usize>) -> Result<()> {
     // use override if provided, otherwise use persisted selection
     let selected = index_override.unwrap_or(history.selected);
 
-    // get the entry at the selected position (if not expired)
+    // if user manually scrolled (selected != 0), show regardless of expiry
+    let manually_scrolled = selected != 0;
+
     let current = history
         .entries
         .get(selected)
-        .filter(|e| !e.is_expired(cfg.dismiss_seconds));
+        .filter(|e| manually_scrolled || !e.is_expired(cfg.dismiss_seconds));
 
-    // count all non-expired entries
-    let active_count = history
-        .entries
-        .iter()
-        .filter(|e| !e.is_expired(cfg.dismiss_seconds))
-        .count();
+    let active_count = history.entries.len();
 
     let output = match current {
         Some(st) => {
@@ -39,7 +36,6 @@ pub fn run(cfg: &Config, index_override: Option<usize>) -> Result<()> {
                 .entries
                 .iter()
                 .enumerate()
-                .filter(|(_, e)| !e.is_expired(cfg.dismiss_seconds))
                 .map(|(i, e)| {
                     let marker = if i == selected { "▸" } else { " " };
                     format!("{marker} {} ({})", e.name, human_size(e.size))
