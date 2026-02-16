@@ -190,7 +190,8 @@ fn build_css(cfg: &Config) -> String {
 
 pub fn run(cfg: &Config) -> Result<()> {
     let history = read_history(&Config::state_file());
-    let Some(st) = history.current().filter(|e| !e.is_expired(cfg.dismiss_seconds)) else {
+    let manually_scrolled = history.selected != 0;
+    let Some(st) = history.current().filter(|e| manually_scrolled || !e.is_expired(cfg.dismiss_seconds)) else {
         return Ok(());
     };
     if !st.path.exists() {
@@ -393,6 +394,20 @@ pub fn run(cfg: &Config) -> Result<()> {
 
         win.set_child(Some(&outer));
         win.present();
+
+        // scroll to cycle through history
+        let scroll_ctl = gtk4::EventControllerScroll::new(
+            gtk4::EventControllerScrollFlags::VERTICAL,
+        );
+        scroll_ctl.connect_scroll(move |_, _, dy| {
+            let dir = if dy > 0.0 { "down" } else { "up" };
+            // update history selection
+            let _ = Command::new("glance").args(["scroll", dir]).output();
+            // relaunch menu with new selection
+            let _ = Command::new("glance").arg("menu").spawn();
+            std::process::exit(0);
+        });
+        win.add_controller(scroll_ctl);
 
         // escape to dismiss
         let key_ctl = gtk4::EventControllerKey::new();
