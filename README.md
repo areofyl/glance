@@ -11,6 +11,8 @@ Click to open a dropdown menu with actions: drag-and-drop, open, edit, or copy t
 - **Copy respects scroll selection** — right-click copy now works on whichever file you've scrolled to
 - **Proper cleanup** — menu no longer leaves orphaned lock/pid files after dismissal
 - **File locking on state** — concurrent access to history state is now safe under flock
+- **Fix: waybar polling interval** — changed from `"interval": 1` (spawned 3600 processes/hr) to `"interval": "once"`, relying on signal-based updates instead
+- **Fix: shared lock for reads** — `read_history()` now uses a shared lock (`LOCK_SH`) instead of exclusive, preventing lock contention when waybar polls status
 
 ![demo](demo.gif)
 
@@ -89,7 +91,7 @@ Add to your Waybar config (`~/.config/waybar/config.jsonc`):
 "custom/glance": {
     "exec": "glance status",
     "return-type": "json",
-    "interval": 1,
+    "interval": "once",
     "signal": 8,
     "on-click": "glance menu",
     "on-click-right": "glance copy",
