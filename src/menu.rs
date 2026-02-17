@@ -172,6 +172,7 @@ pub fn run(cfg: &Config) -> Result<()> {
     let has_edit = cfg.has_action("edit");
     let has_copy = cfg.has_action("copy");
     let editor_cmd = cfg.editor.clone();
+    let drag_cmd = cfg.drag_command.clone();
     let css_str = build_css(cfg);
 
     // use saved module position if available, otherwise capture from cursor
@@ -284,28 +285,44 @@ pub fn run(cfg: &Config) -> Result<()> {
 
         // Drag
         if has_drag {
-            let btn_drag = gtk4::Label::new(Some("Drag"));
-            btn_drag.add_css_class("menu-action");
-            btn_drag.set_size_request(60, -1);
-            let ds = gtk4::DragSource::new();
-            ds.set_actions(gdk::DragAction::COPY);
-            let file = gio::File::for_path(&filepath);
-            let uri = format!("{}\r\n", file.uri());
-            ds.connect_prepare(move |_, _, _| {
-                Some(gdk::ContentProvider::for_bytes(
-                    "text/uri-list",
-                    &glib::Bytes::from(uri.as_bytes()),
-                ))
-            });
-            let a = app_handle.clone();
-            ds.connect_drag_end(move |_, _, _| {
-                let a = a.clone();
-                glib::timeout_add_local_once(Duration::from_millis(200), move || {
+            if drag_cmd == "builtin" {
+                let btn_drag = gtk4::Label::new(Some("Drag"));
+                btn_drag.add_css_class("menu-action");
+                btn_drag.set_size_request(60, -1);
+                let ds = gtk4::DragSource::new();
+                ds.set_actions(gdk::DragAction::COPY);
+                let file = gio::File::for_path(&filepath);
+                let uri = format!("{}\r\n", file.uri());
+                ds.connect_prepare(move |_, _, _| {
+                    Some(gdk::ContentProvider::for_bytes(
+                        "text/uri-list",
+                        &glib::Bytes::from(uri.as_bytes()),
+                    ))
+                });
+                let a = app_handle.clone();
+                ds.connect_drag_end(move |_, _, _| {
+                    let a = a.clone();
+                    glib::timeout_add_local_once(Duration::from_millis(200), move || {
+                        a.quit();
+                    });
+                });
+                btn_drag.add_controller(ds);
+                actions.append(&btn_drag);
+            } else {
+                let btn_drag = gtk4::Button::with_label("Drag");
+                btn_drag.add_css_class("menu-action");
+                let p = filepath.clone();
+                let cmd = drag_cmd.clone();
+                let a = app_handle.clone();
+                btn_drag.connect_clicked(move |_| {
+                    let mut parts = cmd.split_whitespace();
+                    let bin = parts.next().unwrap_or("ripdrag");
+                    let args: Vec<&str> = parts.collect();
+                    let _ = Command::new(bin).args(&args).arg(&p).spawn();
                     a.quit();
                 });
-            });
-            btn_drag.add_controller(ds);
-            actions.append(&btn_drag);
+                actions.append(&btn_drag);
+            }
         }
 
         // Open
