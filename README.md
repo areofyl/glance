@@ -3,13 +3,23 @@
 A file clipboard for Wayland — watches directories for new files and shows a transient widget in [Waybar](https://github.com/Alexays/Waybar).
 Click to open a dropdown menu with actions: drag-and-drop, open, edit, or copy the path.
 
-## What's new in 0.3.5
+## What's new in 0.3.6
+
+- **Fix: file lock no longer blocks indefinitely** — the state file lock now uses non-blocking `flock` with a 2-second timeout. Previously, if the watcher held the lock while a waybar handler called `scroll` or `menu`, the handler would block forever, freezing waybar entirely.
+- **Fix: menu scroll no longer blocks GTK event loop** — scroll-in-menu now spawns the scroll subprocess without waiting for it, preventing the menu from freezing.
+- **Fix: external drag command timeout** — external drag tools (ripdrag, dragon, etc.) are now killed after 30 seconds if they don't exit, instead of blocking forever.
+- **Fix: wl-copy no longer blocks** — the copy command now fires wl-copy without waiting for it to finish.
+
+<details>
+<summary>What's new in 0.3.5</summary>
 
 - **Configurable drag command** — set `drag_command` in your config to use [ripdrag](https://github.com/nik012003/ripdrag), [dragon](https://github.com/mwh/dragon), or any drag tool of your choice. Useful for dragging files into XWayland browsers where native Wayland DnD doesn't work. Defaults to the builtin GTK4 drag overlay.
 - **Fix: waybar freeze** — `pkill -RTMIN+8 waybar` was accidentally killing waybar's child processes (like a running `glance status`), leaving waybar with an orphaned pipe that it busy-loops on. Now targets only the main waybar process with `-x -o` flags.
 - **Fix: waybar polling interval** — changed from `"interval": 1` (spawned 3600 processes/hr) to `"interval": 5`, massively reducing process spawning overhead.
 - **Fix: full binary paths** — `glance init` now writes absolute paths in Waybar and Hyprland configs, so glance works even when `~/.local/bin` or `~/.cargo/bin` aren't in waybar's PATH.
 - **Fix: menu scroll** — scroll inside the dropdown menu now uses the full binary path, fixing scroll not working when launched from waybar.
+
+</details>
 
 ![demo](demo.gif)
 
