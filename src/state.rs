@@ -80,6 +80,8 @@ impl FileState {
 pub struct HistoryState {
     pub entries: Vec<FileState>,
     pub selected: usize,
+    #[serde(default)]
+    pub last_scroll: f64,
 }
 
 impl HistoryState {
@@ -91,18 +93,27 @@ impl HistoryState {
         self.entries.insert(0, entry);
         self.entries.truncate(max_size);
         self.selected = 0;
+        self.last_scroll = 0.0;
     }
 
     pub fn select_prev(&mut self) {
         if self.selected + 1 < self.entries.len() {
             self.selected += 1;
         }
+        self.last_scroll = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs_f64();
     }
 
     pub fn select_next(&mut self) {
         if self.selected > 0 {
             self.selected -= 1;
         }
+        self.last_scroll = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs_f64();
     }
 
 }
@@ -114,16 +125,16 @@ fn parse_history(content: &str) -> HistoryState {
     }
     // backward compat: old single-FileState format
     if let Ok(fs) = serde_json::from_str::<FileState>(content) {
-        return HistoryState { entries: vec![fs], selected: 0 };
+        return HistoryState { entries: vec![fs], selected: 0, last_scroll: 0.0 };
     }
-    HistoryState { entries: vec![], selected: 0 }
+    HistoryState { entries: vec![], selected: 0, last_scroll: 0.0 }
 }
 
 pub fn read_history(state_file: &Path) -> HistoryState {
     let _lock = FileLock::acquire(state_file).ok();
     let content = match std::fs::read_to_string(state_file) {
         Ok(c) => c,
-        Err(_) => return HistoryState { entries: vec![], selected: 0 },
+        Err(_) => return HistoryState { entries: vec![], selected: 0, last_scroll: 0.0 },
     };
     parse_history(&content)
 }
