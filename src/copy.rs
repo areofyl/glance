@@ -8,9 +8,9 @@ pub fn run(cfg: &Config) -> Result<()> {
     let manually_scrolled = history.selected != 0;
     if let Some(st) = history.current().filter(|e| manually_scrolled || !e.is_expired(cfg.dismiss_seconds)) {
         if st.path.exists() {
-            Command::new("wl-copy")
+            let _ = Command::new("wl-copy")
                 .arg(st.path.to_string_lossy().as_ref())
-                .output()?;
+                .spawn();
         }
     }
     Ok(())
