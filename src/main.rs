@@ -8,6 +8,7 @@ mod state;
 mod status;
 mod util;
 mod watch;
+mod watch_status;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
@@ -38,6 +39,8 @@ enum Commands {
     Scroll {
         direction: String,
     },
+    /// Continuous status output for Waybar (watches state file)
+    WatchStatus,
     /// Set up config, Waybar module, CSS, and Hyprland autostart
     Init,
 }
@@ -58,6 +61,7 @@ fn main() -> Result<()> {
         Commands::Drag => drag::run(&cfg),
         Commands::Menu => menu::run(&cfg),
         Commands::Scroll { ref direction } => scroll::run(&cfg, direction),
+        Commands::WatchStatus => watch_status::run(&cfg),
         Commands::Init => unreachable!(),
     }
 }
