@@ -3,12 +3,20 @@
 A file clipboard for Wayland — watches directories for new files and shows a transient widget in [Waybar](https://github.com/Alexays/Waybar).
 Click to open a dropdown menu with actions: drag-and-drop, open, edit, or copy the path.
 
-## What's new in 0.3.6
+## What's new in 0.4.0
+
+- **New `watch-status` command** — a long-lived process that watches the state file via inotify and outputs JSON to stdout on each change. Replaces signal-based (`SIGRTMIN+N`) and polling (`interval`) waybar updates with zero-overhead continuous output. Use `"exec": "glance watch-status"` with `"restart-interval": 1` in your waybar config.
+- **Scroll keeps widget visible** — scrolling through file history now keeps the widget visible for `dismiss_seconds` after the last scroll, then dismisses normally. Previously, scrolling to a non-zero index kept it visible forever, and scrolling back to the newest file dismissed it immediately.
+
+<details>
+<summary>What's new in 0.3.6</summary>
 
 - **Fix: file lock no longer blocks indefinitely** — the state file lock now uses non-blocking `flock` with a 2-second timeout. Previously, if the watcher held the lock while a waybar handler called `scroll` or `menu`, the handler would block forever, freezing waybar entirely.
 - **Fix: menu scroll no longer blocks GTK event loop** — scroll-in-menu now spawns the scroll subprocess without waiting for it, preventing the menu from freezing.
 - **Fix: external drag command timeout** — external drag tools (ripdrag, dragon, etc.) are now killed after 30 seconds if they don't exit, instead of blocking forever.
 - **Fix: wl-copy no longer blocks** — the copy command now fires wl-copy without waiting for it to finish.
+
+</details>
 
 <details>
 <summary>What's new in 0.3.5</summary>
@@ -92,10 +100,9 @@ Add to your Waybar config (`~/.config/waybar/config.jsonc`):
 
 ```jsonc
 "custom/glance": {
-    "exec": "/path/to/glance status",
+    "exec": "/path/to/glance watch-status",
     "return-type": "json",
-    "interval": 5,
-    "signal": 8,
+    "restart-interval": 1,
     "on-click": "/path/to/glance menu",
     "on-click-right": "/path/to/glance copy",
     "on-scroll-up": "/path/to/glance scroll up",
@@ -182,7 +189,8 @@ border_radius = 12
 ```
 glance init            # set up config, waybar module, CSS, and autostart
 glance watch           # run the inotify watcher (long-running)
-glance status          # JSON for waybar (called by exec)
+glance watch-status    # continuous JSON output for waybar (long-running)
+glance status          # one-shot JSON for waybar
 glance menu            # dropdown menu below waybar with actions
 glance copy            # wl-copy the selected file path
 glance drag            # drag-and-drop overlay at cursor
