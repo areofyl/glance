@@ -32,6 +32,9 @@ fn default_actions() -> Vec<String> {
 fn default_menu_dismiss_seconds() -> u64 {
     8
 }
+fn default_drag_command() -> String {
+    "builtin".into()
+}
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct MenuStyle {
@@ -91,6 +94,8 @@ pub struct Config {
     pub actions: Vec<String>,
     #[serde(default = "default_menu_dismiss_seconds")]
     pub menu_dismiss_seconds: u64,
+    #[serde(default = "default_drag_command")]
+    pub drag_command: String,
     #[serde(default)]
     pub menu_style: MenuStyle,
 }
@@ -107,6 +112,7 @@ impl Default for Config {
             editor: default_editor(),
             actions: default_actions(),
             menu_dismiss_seconds: default_menu_dismiss_seconds(),
+            drag_command: default_drag_command(),
             menu_style: MenuStyle::default(),
         }
     }
