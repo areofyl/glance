@@ -398,11 +398,14 @@ pub fn run(cfg: &Config) -> Result<()> {
         let a = app_handle.clone();
         scroll_ctl.connect_scroll(move |_, _, dy| {
             let dir = if dy > 0.0 { "down" } else { "up" };
-            // update history selection
+            // update history selection (non-blocking spawn, not .output())
             let bin = std::env::current_exe().unwrap_or_else(|_| "glance".into());
-            let _ = Command::new(&bin).args(["scroll", dir]).output();
-            // relaunch menu with new selection
-            let _ = Command::new(&bin).arg("menu").spawn();
+            let _ = Command::new(&bin).args(["scroll", dir]).spawn();
+            // relaunch menu with new selection after a short delay
+            let bin2 = std::env::current_exe().unwrap_or_else(|_| "glance".into());
+            glib::timeout_add_local_once(Duration::from_millis(100), move || {
+                let _ = Command::new(&bin2).arg("menu").spawn();
+            });
             a.quit();
             glib::Propagation::Stop
         });
