@@ -3,16 +3,13 @@
 A file clipboard for Wayland — watches directories for new files and shows a transient widget in [Waybar](https://github.com/Alexays/Waybar).
 Click to open a dropdown menu with actions: drag-and-drop, open, edit, or copy the path.
 
-## What's new in 0.3.0
+## What's new in 0.3.5
 
-- **Filename in menu** — the dropdown now shows the filename alongside the thumbnail and file size
-- **Editor supports arguments** — set `editor = "gimp -n"` or any command with flags in your config
-- **Scroll direction fixed** — scroll up goes to newer files, scroll down to older
-- **Copy respects scroll selection** — right-click copy now works on whichever file you've scrolled to
-- **Proper cleanup** — menu no longer leaves orphaned lock/pid files after dismissal
-- **File locking on state** — concurrent access to history state is now safe under flock
-- **Fix: waybar polling interval** — changed from `"interval": 1` (spawned 3600 processes/hr) to `"interval": "once"`, relying on signal-based updates instead
-- **Fix: shared lock for reads** — `read_history()` now uses a shared lock (`LOCK_SH`) instead of exclusive, preventing lock contention when waybar polls status
+- **Configurable drag command** — set `drag_command` in your config to use [ripdrag](https://github.com/nik012003/ripdrag), [dragon](https://github.com/mwh/dragon), or any drag tool of your choice. Useful for dragging files into XWayland browsers where native Wayland DnD doesn't work. Defaults to the builtin GTK4 drag overlay.
+- **Fix: waybar freeze** — `pkill -RTMIN+8 waybar` was accidentally killing waybar's child processes (like a running `glance status`), leaving waybar with an orphaned pipe that it busy-loops on. Now targets only the main waybar process with `-x -o` flags.
+- **Fix: waybar polling interval** — changed from `"interval": 1` (spawned 3600 processes/hr) to `"interval": 5`, massively reducing process spawning overhead.
+- **Fix: full binary paths** — `glance init` now writes absolute paths in Waybar and Hyprland configs, so glance works even when `~/.local/bin` or `~/.cargo/bin` aren't in waybar's PATH.
+- **Fix: menu scroll** — scroll inside the dropdown menu now uses the full binary path, fixing scroll not working when launched from waybar.
 
 ![demo](demo.gif)
 
@@ -42,11 +39,7 @@ You also need a [Rust toolchain](https://rustup.rs/) and **Hyprland** (uses `hyp
 cargo install wayglance
 ```
 
-On Fedora, you may need to set `PKG_CONFIG_PATH` first:
-
-```sh
-PKG_CONFIG_PATH=/usr/lib64/pkgconfig cargo install wayglance
-```
+> If `cargo install` fails with "gtk4.pc not found", try: `PKG_CONFIG_PATH=/usr/lib64/pkgconfig cargo install wayglance`
 
 **From source:**
 
@@ -65,9 +58,9 @@ glance init
 
 This automatically:
 - Creates the default config at `~/.config/glance/config.toml`
-- Adds the Waybar module to your Waybar config
+- Adds the Waybar module to your Waybar config (with full binary paths)
 - Appends CSS styles to your Waybar `style.css`
-- Adds `exec-once = glance watch` and `SUPER+V` keybind to your Hyprland config
+- Adds `exec-once` and `SUPER+V` keybind to your Hyprland config
 
 Restart Waybar and you're done.
 
@@ -79,8 +72,8 @@ Restart Waybar and you're done.
 Add to your Hyprland config (`~/.config/hypr/hyprland.conf`):
 
 ```
-exec-once = glance watch
-bind = SUPER, V, exec, glance drag
+exec-once = /path/to/glance watch
+bind = SUPER, V, exec, /path/to/glance drag
 ```
 
 ### Waybar module
@@ -89,16 +82,18 @@ Add to your Waybar config (`~/.config/waybar/config.jsonc`):
 
 ```jsonc
 "custom/glance": {
-    "exec": "glance status",
+    "exec": "/path/to/glance status",
     "return-type": "json",
-    "interval": 0,
+    "interval": 5,
     "signal": 8,
-    "on-click": "glance menu",
-    "on-click-right": "glance copy",
-    "on-scroll-up": "glance scroll up",
-    "on-scroll-down": "glance scroll down"
+    "on-click": "/path/to/glance menu",
+    "on-click-right": "/path/to/glance copy",
+    "on-scroll-up": "/path/to/glance scroll up",
+    "on-scroll-down": "/path/to/glance scroll down"
 }
 ```
+
+> Use the full path to the glance binary (e.g. `/home/you/.local/bin/glance`) since waybar may not have `~/.local/bin` in its PATH.
 
 Then add `"custom/glance"` to your bar layout (e.g. `modules-right`).
 A complete snippet is in [`waybar-module.jsonc`](waybar-module.jsonc).
@@ -157,6 +152,10 @@ actions = ["drag", "open", "edit", "copy"]
 
 # auto-dismiss the dropdown after N seconds (0 = never)
 menu_dismiss_seconds = 8
+
+# drag command: "builtin" for GTK4 native drag, or an external tool
+# use "ripdrag --and-exit" for better browser compatibility (XWayland)
+drag_command = "builtin"
 
 # customize menu appearance
 [menu_style]
